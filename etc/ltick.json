@@ -1,0 +1,61 @@
+{
+  "temporary_path": "/tmp",
+  "server": {
+    "port": 80,
+    "max_idle_conns_per_host": 10,
+    "request_timeout": "0s",
+    "graceful_stop_timeout": "120s"
+  },
+  "router": {
+    "proxy": [
+      {
+        "rule": [
+          "^.*(preview.media).*\/(?P<type>pdfv)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>pdf)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>w)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>img)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>ppt)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>e)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>excel)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>txt)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>Content)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>Scripts)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>cache)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>Default)(\/|?)(?P<path>.*)$",
+          "^.*(preview.media).*\/(?P<type>Config)(\/|?)(?P<path>.*)$"
+        ],
+        "upstream": "http://10.33.107.101:8088/$type$path"
+      }
+    ]
+  },
+  "modules": {
+    "Logger": {
+      "Targets": {
+        "access": {
+          "Type": "%ACCESS_LOG_TYPE%",
+          "Writer": "%ACCESS_LOG_WRITER_NAME%",
+          "FileName": "%ACCESS_LOG_FILE_NAME%",
+          "MaxLevel": "%ACCESS_LOG_MAX_LEVEL%",
+          "Formatter": "%ACCESS_LOG_FORMATTER%"
+        },
+        "debug": {
+          "Type": "%DEBUG_LOG_TYPE%",
+          "Writer": "%DEBUG_LOG_WRITER_NAME%",
+          "FileName": "%DEBUG_LOG_FILE_NAME%",
+          "MaxLevel": "%DEBUG_LOG_MAX_LEVEL%",
+          "Formatter": "%DEBUG_LOG_FORMATTER%"
+        },
+        "system": {
+          "Type": "%SYSTEM_LOG_TYPE%",
+          "Writer": "%SYSTEM_LOG_WRITER_NAME%",
+          "FileName": "%SYSTEM_LOG_FILE_NAME%",
+          "MaxLevel": "%SYSTEM_LOG_MAX_LEVEL%",
+          "Formatter": "%SYSTEM_LOG_FORMATTER%"
+        }
+      }
+    },
+    "testModule1": {
+      "Foo": "Bar"
+    }
+  }
+}
