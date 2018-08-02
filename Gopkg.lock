@@ -174,7 +174,7 @@
     "module/queue",
     "module/utility"
   ]
-  revision = "592de0cdfb3fb05ce0c494d12e97ff415b8f80b4"
+  revision = "399b725990133088b6354f371a6c42f7eec947e1"
 
 [[projects]]
   branch = "master"
@@ -315,7 +315,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "a0f8a16cb08c06df97cbdf9c47f4731ba548c33c"
+  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
 
 [[projects]]
   branch = "master"
@@ -324,7 +324,7 @@
     "unix",
     "windows"
   ]
-  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
+  revision = "3dc4335d56c789b04b0ba99b7a37249d9b614314"
 
 [[projects]]
   name = "golang.org/x/text"

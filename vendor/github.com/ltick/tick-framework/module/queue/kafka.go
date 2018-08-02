@@ -68,7 +68,7 @@ func (this *KafkaQueue) GetConfig() map[string]interface{} {
 }
 
 // 创建生产者
-func (this *KafkaQueue) NewProducer(ctx context.Context, topic string, message []byte, errHandles ...func(context.Context, string, string, error)) (*Producer, error) {
+func (this *KafkaQueue) NewProducer(ctx context.Context, topic string, errHandles ...func(context.Context, string, string, error)) (*Producer, error) {
 	config := sarama.NewConfig()
 	config.ChannelBufferSize = 2000
 	p, err := sarama.NewAsyncProducer(this.brokers, config)
@@ -78,7 +78,6 @@ func (this *KafkaQueue) NewProducer(ctx context.Context, topic string, message [
 
 	producer := &Producer{
 		topic:    topic,
-		message:  message,
 		producer: p,
 	}
 	if len(errHandles) > 0 {
@@ -129,15 +128,14 @@ func (c *Consumer) Close() {
 
 type Producer struct {
 	topic    string
-	message  []byte
 	producer sarama.AsyncProducer
 }
 
 // 生产
-func (p *Producer) Produce() {
+func (p *Producer) Produce(message []byte) {
 	producerMessage := &sarama.ProducerMessage{
 		Topic: p.topic,
-		Value: sarama.ByteEncoder(p.message),
+		Value: sarama.ByteEncoder(message),
 	}
 	p.producer.Input() <- producerMessage
 }
