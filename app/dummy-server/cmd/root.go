@@ -23,10 +23,12 @@ import (
 	"github.com/spf13/cobra"
 
 	appModule "github.com/ltick/dummy/app/module"
+	appModule1 "github.com/ltick/dummy/app/module1"
 )
 
 var modules []*module.Module = []*module.Module{
 	// 存储初始化
+	&module.Module{Name: "appModule1", Module: &appModule1.Instance{}},
 	&module.Module{Name: "appModule", Module: &appModule.Instance{}},
 }
 var configs map[string]libConfig.Option = map[string]libConfig.Option{
