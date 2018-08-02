@@ -19,8 +19,7 @@ var (
 )
 
 type KafkaHandler struct {
-
-	queues  map[string]*KafkaQueue
+	queues map[string]*KafkaQueue
 }
 
 func NewKafkaHandler() Handler {
@@ -60,7 +59,7 @@ func (this *KafkaHandler) GetQueue(name string) (QueueHandler, error) {
 }
 
 type KafkaQueue struct {
-	config map[string]interface{}
+	config  map[string]interface{}
 	brokers []string
 }
 

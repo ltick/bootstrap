@@ -10,19 +10,19 @@
     "proxy": {
       "preview.media.lianjia.com": {
         "rule": [
-          "(?P<type>pdfv)(\/|?)(?P<path>.*)$",
-          "(?P<type>pdf)(\/|?)(?P<path>.*)$",
-          "(?P<type>w)(\/|?)(?P<path>.*)$",
-          "(?P<type>img)(\/|?)(?P<path>.*)$",
-          "(?P<type>ppt)(\/|?)(?P<path>.*)$",
-          "(?P<type>e)(\/|?)(?P<path>.*)$",
-          "(?P<type>excel)(\/|?)(?P<path>.*)$",
-          "(?P<type>txt)(\/|?)(?P<path>.*)$",
-          "(?P<type>Content)(\/|?)(?P<path>.*)$",
-          "(?P<type>Scripts)(\/|?)(?P<path>.*)$",
-          "(?P<type>cache)(\/|?)(?P<path>.*)$",
-          "(?P<type>Default)(\/|?)(?P<path>.*)$",
-          "(?P<type>Config)(\/|?)(?P<path>.*)$"
+          "(?P<type>pdfv)(\/|[?])(?P<path>.*)$",
+          "(?P<type>pdf)(\/|[?])(?P<path>.*)$",
+          "(?P<type>w)(\/|[?])(?P<path>.*)$",
+          "(?P<type>img)(\/|[?])(?P<path>.*)$",
+          "(?P<type>ppt)(\/|[?])(?P<path>.*)$",
+          "(?P<type>e)(\/|[?])(?P<path>.*)$",
+          "(?P<type>excel)(\/|[?])(?P<path>.*)$",
+          "(?P<type>txt)(\/|[?])(?P<path>.*)$",
+          "(?P<type>Content)(\/|[?])(?P<path>.*)$",
+          "(?P<type>Scripts)(\/|[?])(?P<path>.*)$",
+          "(?P<type>cache)(\/|[?])(?P<path>.*)$",
+          "(?P<type>Default)(\/|[?])(?P<path>.*)$",
+          "(?P<type>Config)(\/|[?])(?P<path>.*)$"
         ],
         "upstream": "http://10.33.107.101:8088/$type$path"
       }
