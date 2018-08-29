@@ -2,11 +2,11 @@ package module
 
 import (
 	"context"
+	"fmt"
 
 	libConfig "github.com/ltick/tick-framework/module/config"
 	libUtility "github.com/ltick/tick-framework/module/utility"
 	"github.com/ltick/tick-routing"
-	"fmt"
 )
 
 var (

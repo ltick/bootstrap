@@ -547,6 +547,9 @@ func (e *Engine) Startup() (err error) {
 			return fmt.Errorf(errStartupInjectModule+": %s [module:'%s']", err.Error(), module.Name)
 		}
 	}
+
+	e.Module.SetSortedUserModules()
+
 	// 注入模块
 	err = e.Module.InjectModule()
 	if err != nil {
