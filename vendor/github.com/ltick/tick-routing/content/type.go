@@ -11,7 +11,6 @@ import (
 	"net/http"
 
 	"github.com/ltick/tick-routing"
-	"context"
 )
 
 // MIME types
@@ -52,10 +51,10 @@ func TypeNegotiator(formats ...string) routing.Handler {
 		}
 	}
 
-	return func(ctx context.Context, c *routing.Context) (context.Context, error) {
+	return func(c *routing.Context) error {
 		format := NegotiateContentType(c.Request, formats, formats[0])
 		c.SetDataWriter(DataWriters[format])
-		return ctx,nil
+		return nil
 	}
 }
 
@@ -66,10 +65,16 @@ func (w *JSONDataWriter) SetHeader(res http.ResponseWriter) {
 	res.Header().Set("Content-Type", "application/json")
 }
 
-func (w *JSONDataWriter) Write(res http.ResponseWriter, data interface{}) (err error) {
+func (w *JSONDataWriter) Write(res http.ResponseWriter, data interface{}) (int, error) {
 	enc := json.NewEncoder(res)
 	enc.SetEscapeHTML(false)
-	return enc.Encode(data)
+
+	if err := enc.Encode(data); err != nil {
+		return -1, err
+	}
+
+	// TODO: what is the value of the int return values?
+	return 0, nil
 }
 
 // XMLDataWriter sets the "Content-Type" response header as "application/xml; charset=UTF-8" and writes the given data in XML format to the response.
@@ -79,13 +84,13 @@ func (w *XMLDataWriter) SetHeader(res http.ResponseWriter) {
 	res.Header().Set("Content-Type", "application/xml; charset=UTF-8")
 }
 
-func (w *XMLDataWriter) Write(res http.ResponseWriter, data interface{}) (err error) {
-	var bytes []byte
-	if bytes, err = xml.Marshal(data); err != nil {
-		return
+func (w *XMLDataWriter) Write(res http.ResponseWriter, data interface{}) (int, error) {
+	bytes, err := xml.Marshal(data)
+	if err != nil {
+		return -1, err
 	}
-	_, err = res.Write(bytes)
-	return
+
+	return res.Write(bytes)
 }
 
 // HTMLDataWriter sets the "Content-Type" response header as "text/html; charset=UTF-8" and calls routing.DefaultDataWriter to write the given data to the response.
@@ -95,6 +100,6 @@ func (w *HTMLDataWriter) SetHeader(res http.ResponseWriter) {
 	res.Header().Set("Content-Type", "text/html; charset=UTF-8")
 }
 
-func (w *HTMLDataWriter) Write(res http.ResponseWriter, data interface{}) error {
+func (w *HTMLDataWriter) Write(res http.ResponseWriter, data interface{}) (int, error) {
 	return routing.DefaultDataWriter.Write(res, data)
 }

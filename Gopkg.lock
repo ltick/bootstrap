@@ -16,8 +16,8 @@
 [[projects]]
   name = "github.com/bsm/sarama-cluster"
   packages = ["."]
-  revision = "cf455bc755fe41ac9bb2861e7a961833d9c2ecc3"
-  version = "v2.1.13"
+  revision = "c618e605e15c0d7535f6c96ff8efbb0dba4fd66c"
+  version = "v2.1.15"
 
 [[projects]]
   branch = "master"
@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/eapache/go-resiliency"
@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/eapache/go-xerial-snappy"
   packages = ["."]
-  revision = "040cc1a32f578808623071247fdbd5cc43f37f5f"
+  revision = "776d5712da21bc4762676d614db1d8a64f4238b0"
 
 [[projects]]
   name = "github.com/eapache/queue"
@@ -77,13 +77,13 @@
   branch = "master"
   name = "github.com/golang/gddo"
   packages = ["httputil/header"]
-  revision = "a475e0307621ec6832db210443de8f9ff6ff3148"
+  revision = "96d2a289f41e8b271c9fae52d7d82c970e359284"
 
 [[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -101,7 +101,6 @@
   version = "v2.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -114,7 +113,8 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
+  revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -174,7 +174,7 @@
     "module/queue",
     "module/utility"
   ]
-  revision = "399b725990133088b6354f371a6c42f7eec947e1"
+  revision = "4bffd437b40a8664bb5922f3a31a2ab53624f5a5"
 
 [[projects]]
   branch = "master"
@@ -200,7 +200,7 @@
     "file",
     "slash"
   ]
-  revision = "d5aad7221852347782e115ee237dfcb70c0ad3ab"
+  revision = "0be5c2f759a761d024ece8d3b0b9712d32c7ffb9"
 
 [[projects]]
   name = "github.com/magiconair/properties"
@@ -209,10 +209,10 @@
   version = "v1.8.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
+  revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
@@ -278,13 +278,13 @@
   branch = "master"
   name = "github.com/spf13/jwalterweatherman"
   packages = ["."]
-  revision = "7c0cea34c8ece3fbeb2b27ab9b59511d360fb394"
+  revision = "14d3d4c518341bea657dd8a226f5121c0ff8c9f2"
 
 [[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
-  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
-  version = "v1.0.1"
+  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
+  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
@@ -297,7 +297,7 @@
     "region",
     "zk"
   ]
-  revision = "ef2cd516841c4d43dd8941b76867bc2048ec1e00"
+  revision = "f518fd74c7caabdd2d67ec66a08d50a124c7db3d"
 
 [[projects]]
   name = "github.com/tylerb/graceful"
@@ -309,13 +309,13 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
+  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
@@ -324,7 +324,7 @@
     "unix",
     "windows"
   ]
-  revision = "3dc4335d56c789b04b0ba99b7a37249d9b614314"
+  revision = "d99a578cf41bfccdeaf48b0845c823a4b8b0ad5e"
 
 [[projects]]
   name = "golang.org/x/text"

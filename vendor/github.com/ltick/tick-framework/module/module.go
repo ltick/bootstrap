@@ -108,6 +108,7 @@ func (this *Instance) registerModule(ctx context.Context, moduleName string, mod
 			return ctx, fmt.Errorf(errRegisterModule+": %s", canonicalModuleName, err.Error())
 		}
 	}
+
 	this.Modules[canonicalModuleName] = module
 	this.SortedModules = append(this.SortedModules, canonicalModuleName)
 
@@ -277,11 +278,6 @@ func (this *Instance) UnregisterUserModule(ctx context.Context, moduleNames ...s
 	return ctx, nil
 }
 
-func (this *Instance) SetSortedUserModules() {
-	this.SortedUserModules = SortModules(this.UserModules)
-	this.SortedModules = append(this.SortedModules[:len(this.SortedModules)-len(this.SortedUserModules)], this.SortedUserModules...)
-}
-
 func (this *Instance) GetUserModule(moduleName string) (interface{}, error) {
 	canonicalModuleName := strings.ToUpper(moduleName[0:1]) + moduleName[1:]
 	if _, ok := this.UserModules[canonicalModuleName]; !ok {
@@ -296,6 +292,11 @@ func (this *Instance) GetUserModules() map[string]interface{} {
 		modules[moduleName] = module
 	}
 	return modules
+}
+
+func (this *Instance) SetSortedUserModules() {
+	this.SortedUserModules = SortModules(this.UserModules)
+	this.SortedModules = append(this.SortedModules[:len(this.SortedModules)-len(this.SortedUserModules)], this.SortedUserModules...)
 }
 
 func (this *Instance) GetSortedUserModules(reverses ...bool) []interface{} {
@@ -529,7 +530,6 @@ type ModuleNode struct {
 // SortModules - Sort user modules.
 func SortModules(modules map[string]interface{}) []string {
 	moduleDepend := make(map[string][]string)
-
 	for name := range modules {
 		moduleDepend[name] = []string{}
 	}
@@ -594,18 +594,14 @@ func (node *ModuleNode) NodesMap(modules map[string][]string) {
 		if len(modules[n.Name]) == 0 {
 			continue
 		}
-
 		children := []ModuleNode{}
 		for _, v := range modules[n.Name] {
 			childNode := &ModuleNode{
 				Name: v,
 			}
-
 			children = append(children, *childNode)
 		}
-
 		node.Nodes[k].Nodes = children
-
 		node.Nodes[k].NodesMap(modules)
 	}
 }
@@ -613,13 +609,10 @@ func (node *ModuleNode) NodesMap(modules map[string][]string) {
 // NodesWithLabel - Return nodes with lable.
 func (node *ModuleNode) NodesWithLabel(m map[int][]string, label int) {
 	nodes := []string{}
-
 	for _, n := range node.Nodes {
 		nodes = append(nodes, n.Name)
-
 		n.NodesWithLabel(m, label+1)
 	}
-
 	if _, ok := m[label]; ok {
 		m[label] = append(m[label], nodes...)
 	} else {

@@ -11,6 +11,7 @@ import (
 
 // Context represents the contextual data and environment while processing an incoming HTTP request.
 type Context struct {
+	context.Context
 	Request  *http.Request       // the current request
 	Response http.ResponseWriter // the response writer
 	router   *Router
@@ -21,7 +22,6 @@ type Context struct {
 	handlers []Handler              // the handlers associated with the current route
 	writer   DataWriter
 
-	Ctx        context.Context
 	CancelFunc context.CancelFunc
 }
 
@@ -29,6 +29,7 @@ type Context struct {
 // This method is primarily provided for writing unit tests for handlers.
 func NewContext(res http.ResponseWriter, req *http.Request, handlers ...Handler) *Context {
 	c := &Context{
+		Context:  context.Background(),
 		handlers: handlers,
 	}
 	c.init(res, req)
@@ -132,33 +133,31 @@ func (c *Context) Next() (err error) {
 	}
 	c.index++
 	for n := len(c.handlers); c.index < n; c.index++ {
-        if c.Ctx, err = c.handlers[c.index](c.Ctx, c); err != nil {
-            return err
-        }
-        if c.Ctx != nil {
-            select {
-            case <-c.Ctx.Done():
-                switch c.Ctx.Err() {
-                case context.DeadlineExceeded:
-                    timeoutIndex := 0
-                    for n := len(c.router.TimeoutHandlers); timeoutIndex < n; timeoutIndex++ {
-                        if c.Ctx, err = c.router.TimeoutHandlers[timeoutIndex](c.Ctx, c); err != nil {
-                            if httpError, ok := err.(HTTPError); ok {
-                                return NewHTTPError(httpError.StatusCode(), httpError.Error())
-                            } else {
-                                return NewHTTPError(http.StatusInternalServerError, err.Error())
-                            }
-                        }
-                    }
-                case context.Canceled:
-                    cancelIndex := 0
-                    for n := len(c.router.CancelHandlers); cancelIndex < n; cancelIndex++ {
-                        c.router.CancelHandlers[cancelIndex](c.Ctx, c)
-                    }
-                }
-            default:
-            }
-        }
+		if err = c.handlers[c.index](c); err != nil {
+			return err
+		}
+		select {
+		case <-c.Context.Done():
+			switch c.Context.Err() {
+			case context.DeadlineExceeded:
+				timeoutIndex := 0
+				for n := len(c.router.TimeoutHandlers); timeoutIndex < n; timeoutIndex++ {
+					if err = c.router.TimeoutHandlers[timeoutIndex](c); err != nil {
+						if httpError, ok := err.(HTTPError); ok {
+							return NewHTTPError(httpError.StatusCode(), httpError.Error())
+						} else {
+							return NewHTTPError(http.StatusInternalServerError, err.Error())
+						}
+					}
+				}
+			case context.Canceled:
+				cancelIndex := 0
+				for n := len(c.router.CancelHandlers); cancelIndex < n; cancelIndex++ {
+					c.router.CancelHandlers[cancelIndex](c)
+				}
+			}
+		default:
+		}
 	}
 	return nil
 }
@@ -202,7 +201,8 @@ func (c *Context) Read(data interface{}) error {
 // The method calls the data writer set via SetDataWriter() to do the actual writing.
 // By default, the DefaultDataWriter will be used.
 func (c *Context) Write(data interface{}) error {
-	return c.writer.Write(c.Response, data)
+	_, err := c.writer.Write(c.Response, data)
+	return err
 }
 
 // SetDataWriter sets the data writer that will be used by Write().
@@ -219,9 +219,9 @@ func (c *Context) init(response http.ResponseWriter, request *http.Request) {
 	c.index = -1
 	c.writer = DefaultDataWriter
 	if c.router != nil && c.router.Context != nil {
-		c.Ctx = c.router.Context
+		c.Context = c.router.Context
 	} else {
-		c.Ctx = context.Background()
+		c.Context = context.Background()
 	}
 }
 
