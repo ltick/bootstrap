@@ -163,15 +163,15 @@ func StartService() {
 		copy(logData[3:], data)
 		debugLogger.Info("TRACE|%s|%s|%s|"+format, logData...)
 	}
-	accessLogFunc := func(ctx context.Context, c *routing.Context, rw *access.LogResponseWriter, elapsed float64) {
+	accessLogFunc := func(c *routing.Context, rw *access.LogResponseWriter, elapsed float64) {
 		if debugLogger == nil || accessLogger == nil {
 			return
 		}
-		forwardRequestId, requestId, clientIP, serverAddress := GetLogContext(ctx)
+		forwardRequestId, requestId, clientIP, serverAddress := GetLogContext(c.Context)
 		requestLine := fmt.Sprintf("%s %s %s", c.Request.Method, c.Request.RequestURI, c.Request.Proto)
 		debug := new(bool)
-		if ctx.Value("DEBUG") != nil {
-			*debug = ctx.Value("DEBUG").(bool)
+		if c.Context.Value("DEBUG") != nil {
+			*debug = c.Context.Value("DEBUG").(bool)
 		}
 		if *debug {
 			debugLogger.Info(`ACCESS|%s|%s|%s - %s [%s] "%s" %d %d %d %.3f "%s" "%s" %s %s "%v" "%v"`, forwardRequestId, requestId, clientIP, c.Request.Host, time.Now().Format("2/Jan/2006:15:04:05 -0700"), requestLine, c.Request.ContentLength, rw.Status, rw.BytesWritten, elapsed/1e3, c.Request.Header.Get("Referer"), c.Request.Header.Get("User-Agent"), c.Request.RemoteAddr, serverAddress, c.Request.Header, rw.Header())
@@ -184,14 +184,11 @@ func StartService() {
 			accessLogger.Info(`%s - %s [%s] "%s" %d %d %d %.3f "%s" "%s" %s %s "-" "-"`, clientIP, c.Request.Host, time.Now().Format("2/Jan/2006:15:04:05 -0700"), requestLine, c.Request.ContentLength, rw.Status, rw.BytesWritten, elapsed/1e3, c.Request.Header.Get("Referer"), c.Request.Header.Get("User-Agent"), c.Request.RemoteAddr, serverAddress)
 		}
 	}
-	recoveryHandler := func(ctx context.Context, c *routing.Context, err error) error {
-		if ctx == nil {
-			return routing.NewHTTPError(http.StatusInternalServerError)
-		}
+	recoveryHandler := func(c *routing.Context, err error) error {
 		if debugLogger == nil {
 			return routing.NewHTTPError(http.StatusInternalServerError)
 		}
-		forwardRequestId, requestId, _, serverAddress := GetLogContext(ctx)
+		forwardRequestId, requestId, _, serverAddress := GetLogContext(c.Context)
 		if httpError, ok := err.(routing.HTTPError); ok {
 			status := httpError.StatusCode()
 			switch status {
@@ -219,8 +216,8 @@ func StartService() {
 		"TraceLog":  traceLogFunc,
 		"SystemLog": systemLogFunc,
 	}
-	e.WithValues(values).NewClassicServer("test", func(ctx context.Context, c *routing.Context) (context.Context, error) {
-		return ctx, nil
+	e.WithValues(values).NewClassicServer("test", func(c *routing.Context) error {
+		return nil
 	}).SetLogFunc(accessLogFunc, systemLogger.Emergency, recoveryHandler)
 	err = e.Startup()
 	if err != nil {
