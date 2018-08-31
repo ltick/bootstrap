@@ -12,9 +12,12 @@ import (
 )
 
 var (
-	errRedisRegister      = "cache(redis): register error"
-	errRedisNewCache      = "cache(redis): new pool error"
-	errRedisPoolNotExists = "cache(redis): pool '%s' not exists"
+	errRedisRegister              = "cache(redis): register error"
+	errRedisNewCache              = "cache(redis): new pool error"
+	errRedisPoolNotExists         = "cache(redis): pool '%s' not exists"
+	errRedisZscanCursorTypeError  = "cache(redis): zscan cursor type error"
+	errRedisZscanValueTypeError   = "cache(redis): zscan value type error"
+	errRedisZscanValueLengthError = "cache(redis): zscan value length error"
 )
 
 type RedisHandler struct {
@@ -221,14 +224,10 @@ func (this *RedisPool) Hmset(key interface{}, args ...interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	redisArgs := redis.Args{}
-	redisArgs = redisArgs.Add(sKey)
+	redisArgs := redis.Args{}.Add(sKey)
 	for i := 0; i < len(args); i = i + 2 {
-		redisArgs = redisArgs.Add(args[i])
-		redisArgs = redisArgs.AddFlat(args[i+1])
+		redisArgs = redisArgs.Add(args[i]).Add(args[i+1])
 	}
-
 	_, err = c.Do("HMSET", redisArgs...)
 	return err
 }
@@ -240,11 +239,10 @@ func (this *RedisPool) Hmget(key interface{}, args ...interface{}) (interface{},
 		return nil, err
 	}
 	redisArgs := redis.Args{}
-	redisArgs = redisArgs.Add(sKey)
 	for i := 0; i < len(args); i = i + 1 {
-		redisArgs = redisArgs.Add(args[i])
+		redisArgs.Add(args[i])
 	}
-	values, err := c.Do("HMGET", redisArgs...)
+	values, err := c.Do("HMGET", sKey, redisArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -280,11 +278,11 @@ func (this *RedisPool) Hdel(key interface{}, field interface{}) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	reply, err := c.Do("HDEL", sKey, field)
+	value, err := c.Do("HDEL", sKey, field)
 	if err != nil {
 		return nil, err
 	}
-	return reply, nil
+	return value, nil
 }
 func (this *RedisPool) Hgetall(key interface{}) (interface{}, error) {
 	c := this.Pool.Get()
@@ -302,7 +300,6 @@ func (this *RedisPool) Hgetall(key interface{}) (interface{}, error) {
 func (this *RedisPool) ScanStruct(src []interface{}, dest interface{}) error {
 	return redis.ScanStruct(src, dest)
 }
-
 func (this *RedisPool) Exists(key interface{}) (bool, error) {
 	c := this.Pool.Get()
 	defer c.Close()
@@ -320,82 +317,213 @@ func (this *RedisPool) Exists(key interface{}) (bool, error) {
 		return false, nil
 	}
 }
-func (this *RedisPool) Sadd(key interface{}, value interface{}) error {
+func (this *RedisPool) Sadd(key interface{}, args ...interface{}) error {
 	c := this.Pool.Get()
 	defer c.Close()
 	sKey, err := this.generateKey(key)
 	if err != nil {
 		return err
 	}
-	_, err = c.Do("SADD", sKey, value)
+	redisArgs := redis.Args{}.Add(sKey)
+	for _, arg := range args {
+		redisArgs = redisArgs.AddFlat(arg)
+	}
+	_, err = c.Do("SADD", redisArgs...)
 	return err
 }
-func (this *RedisPool) Zadd(key interface{}, value ...interface{}) error {
+func (this *RedisPool) Scard(key interface{}) (int64, error) {
 	c := this.Pool.Get()
 	defer c.Close()
-
+	sKey, err := this.generateKey(key)
+	if err != nil {
+		return 0, err
+	}
+	return redis.Int64(c.Do("SCARD", sKey))
+}
+func (this *RedisPool) Zadd(key interface{}, score, value interface{}) error {
+	c := this.Pool.Get()
+	defer c.Close()
 	sKey, err := this.generateKey(key)
 	if err != nil {
 		return err
 	}
+	_, err = c.Do("ZADD", sKey, score, value)
+	return err
+}
 
-	var valueLen int
-	for _, v := range value {
-		if v == nil {
-			continue
+func (this *RedisPool) Zcard(key interface{}) (int64, error) {
+	c := this.Pool.Get()
+	defer c.Close()
+	sKey, err := this.generateKey(key)
+	if err != nil {
+		return 0, err
+	}
+	return redis.Int64(c.Do("ZCARD", sKey))
+	//return count, err
+}
+func (this *RedisPool) Zrem(key interface{}, value ...interface{}) error {
+	c := this.Pool.Get()
+	defer c.Close()
+	sKey, err := this.generateKey(key)
+	if err != nil {
+		return err
+	}
+	_, err = c.Do("ZREM", sKey, value)
+	return err
+}
+func (this *RedisPool) Zrange(key interface{}, start, end interface{}) (interface{}, error) {
+	return nil, nil
+}
+func (this *RedisPool) Zscan(key interface{}, cursor string, match string, count int64) (nextCursor string, keys []string, err error) {
+	c := this.Pool.Get()
+	defer c.Close()
+	sKey, err := this.generateKey(key)
+	if err != nil {
+		return "", nil, err
+	}
+	args := redis.Args{}.Add(sKey).Add(cursor)
+	if match != "" {
+		args = args.Add("MATCH", match)
+	}
+	if count == 0 {
+		count = 1000
+	}
+	if count > 0 {
+		args = args.Add("COUNT", count)
+	}
+	values, err := redis.Values(c.Do("ZSCAN", args...))
+	if err != nil {
+		return "", nil, err
+	}
+	if len(values) == 2 {
+		nextCursor = ""
+		if cursorByte, ok := values[0].([]uint8); ok {
+			nextCursor = string(cursorByte)
+		} else {
+			return "", nil, errors.New(errRedisZscanCursorTypeError)
 		}
-		valueLen++
+		keys = make([]string, 0)
+		if keysArr, ok := values[1].([]interface{}); ok {
+			for _, keyInterface := range keysArr {
+				if keyByte, ok := keyInterface.([]uint8); ok {
+					keys = append(keys, string(keyByte))
+				} else {
+					return "", nil, errors.New(errRedisZscanCursorTypeError)
+				}
+			}
+			return nextCursor, keys, nil
+		} else {
+			return "", nil, errors.New(errRedisZscanValueTypeError)
+		}
+	} else {
+		return "", nil, errors.New(errRedisZscanValueLengthError)
 	}
-
-	var inputs []interface{}
-	if valueLen > 0 {
-		inputs = append(inputs, sKey)
-		inputs = append(inputs, value...)
-
-		_, err = c.Do("ZADD", inputs...)
-		return err
-	}
-
-	return nil
 }
-func (this *RedisPool) Zscore(key interface{}, field interface{}) (interface{}, error) {
+func (this *RedisPool) Sscan(key interface{}, cursor string, match string, count int64) (interface{}, error) {
 	c := this.Pool.Get()
 	defer c.Close()
 	sKey, err := this.generateKey(key)
 	if err != nil {
 		return nil, err
 	}
-	value, err := c.Do("ZSCORE", sKey, field)
-	if err != nil {
-		return nil, err
+	args := redis.Args{}.Add(sKey).Add(cursor)
+	if match != "" {
+		args = args.Add("MATCH", match)
 	}
-	return value, nil
+	if count == 0 {
+		count = 1000
+	}
+	if count > 0 {
+		args = args.Add("COUNT", count)
+	}
+	return c.Do("SSCAN", args...)
 }
-func (this *RedisPool) Zrange(key interface{}) (interface{}, error) {
+func (this *RedisPool) Hscan(key interface{}, cursor string, match string, count int64) (interface{}, error) {
 	c := this.Pool.Get()
 	defer c.Close()
 	sKey, err := this.generateKey(key)
 	if err != nil {
 		return nil, err
 	}
-	value, err := c.Do("ZREVRANGEBYSCORE", sKey, "+inf", "-inf", "WITHSCORES")
-	if err != nil {
-		return nil, err
+	args := redis.Args{}.Add(sKey).Add(cursor)
+	if match != "" {
+		args = args.Add("MATCH", match)
 	}
-	return value, nil
+	if count == 0 {
+		count = 1000
+	}
+	if count > 0 {
+		args = args.Add("COUNT", count)
+	}
+	return c.Do("HSCAN", args...)
 }
-func (this *RedisPool) Zrem(key interface{}, field interface{}) (interface{}, error) {
+func (this *RedisPool) Scan(cursor string, match string, count int64) (nextCursor string, keys []string, err error) {
+	c := this.Pool.Get()
+	defer c.Close()
+	args := redis.Args{}.Add(cursor)
+	if match != "" {
+		args = args.Add("MATCH", match)
+	}
+	if count > 0 {
+		args = args.Add("COUNT", count)
+	}
+	values, err := redis.Values(c.Do("SCAN", args...))
+	if err != nil {
+		return "", nil, err
+	}
+	if len(values) == 2 {
+		nextCursor := ""
+		if cursorByte, ok := values[0].([]uint8); ok {
+			nextCursor = string(cursorByte)
+		} else {
+			return "", nil, errors.New(errRedisZscanCursorTypeError)
+		}
+		keys = make([]string, 0)
+		if keysArr, ok := values[1].([]interface{}); ok {
+			for _, keyInterface := range keysArr {
+				if keyByte, ok := keyInterface.([]uint8); ok {
+					keys = append(keys, string(keyByte))
+				} else {
+					return "", nil, errors.New(errRedisZscanCursorTypeError)
+				}
+			}
+			return nextCursor, keys, nil
+		} else {
+			return "", nil, errors.New(errRedisZscanValueTypeError)
+		}
+	} else {
+		return "", nil, errors.New(errRedisZscanValueLengthError)
+	}
+}
+func (this *RedisPool) Sort(key interface{}, by interface{}, offest int64, count int64, desc *bool, alpha *bool, gets ...interface{}) ([]string, error) {
 	c := this.Pool.Get()
 	defer c.Close()
 	sKey, err := this.generateKey(key)
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.Do("ZREM", sKey, field)
-	if err != nil {
-		return nil, err
+	args := redis.Args{}.Add(sKey)
+	if by != nil {
+		args = args.Add("BY", by)
 	}
-	return res, nil
+	if len(gets) > 0 {
+		for _, get := range gets {
+			if get != "" {
+				args = args.Add("GET", get)
+			}
+		}
+	}
+	if count == 0 {
+		count = 1000
+	}
+	args = append(args, "LIMIT", offest, count)
+	if desc != nil && *desc {
+		args = args.Add("DESC")
+	}
+	if alpha != nil && *alpha {
+		args = args.Add("ALPHA")
+	}
+	return redis.Strings(c.Do("SORT", args...))
 }
 func (this *RedisPool) generateKey(key interface{}) (rKey string, err error) {
 	switch key.(type) {
@@ -413,6 +541,6 @@ func (this *RedisPool) generateKey(key interface{}) (rKey string, err error) {
 	return rKey, nil
 }
 
-func ErrNil(err error) bool {
+func RedisErrNil(err error) bool {
 	return strings.Contains(err.Error(), redis.ErrNil.Error())
 }

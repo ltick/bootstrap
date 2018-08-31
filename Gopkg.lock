@@ -162,7 +162,7 @@
   revision = "d96165788b11e2d366de5c569292eca714b586da"
 
 [[projects]]
-  branch = "master"
+  branch = "v1.1"
   name = "github.com/ltick/tick-framework"
   packages = [
     ".",
@@ -172,9 +172,11 @@
     "module/database",
     "module/logger",
     "module/queue",
-    "module/utility"
+    "module/session",
+    "module/utility",
+    "writer"
   ]
-  revision = "4bffd437b40a8664bb5922f3a31a2ab53624f5a5"
+  revision = "d3618a53635a133fc15db4bd21d6b9260d058460"
 
 [[projects]]
   branch = "master"
@@ -226,8 +228,8 @@
     ".",
     "internal/xxh32"
   ]
-  revision = "1958fd8fff7f115e79725b1288e0b878b3e06b00"
-  version = "v2.0.3"
+  revision = "ea731401f5c95a8ba30f15787e5e0fb77c60c66b"
+  version = "v2.0.4"
 
 [[projects]]
   branch = "master"
@@ -309,7 +311,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
 
 [[projects]]
   branch = "master"
@@ -324,7 +326,7 @@
     "unix",
     "windows"
   ]
-  revision = "d99a578cf41bfccdeaf48b0845c823a4b8b0ad5e"
+  revision = "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -352,6 +354,16 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "gopkg.in/h2non/filetype.v1"
+  packages = [
+    ".",
+    "matchers",
+    "types"
+  ]
+  revision = "cc14fdc9ca0e4c2bafad7458f6ff79fd3947cfbb"
+  version = "v1.0.5"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -360,6 +372,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5ca5799a7577c4ce01fd2380aadfbcd6717c3bb7dcedcf2f563c374dd1c92afd"
+  inputs-digest = "4df3348353094ba1aebcc1eda6bcdb05ecbb03a8bc70e7739bcfb106fb365dd4"
   solver-name = "gps-cdcl"
   solver-version = 1

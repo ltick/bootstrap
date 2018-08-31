@@ -90,19 +90,31 @@ func (this *Instance) Use(ctx context.Context, handlerName string) error {
 	}
 	return nil
 }
-func (this *Instance) NewCache(ctx context.Context, name string) (CacheHandler, error) {
+func (this *Instance) NewCache(ctx context.Context, name string, config map[string]interface{}) (CacheHandler, error) {
 	cacheHandler, err := this.GetCache(name)
 	if err == nil {
 		return cacheHandler, nil
 	}
-	config := map[string]interface{}{
-		"CACHE_REDIS_HOST":       this.Config.GetString("CACHE_REDIS_HOST"),
-		"CACHE_REDIS_PORT":       this.Config.GetString("CACHE_REDIS_PORT"),
-		"CACHE_REDIS_PASSWORD":   this.Config.GetString("CACHE_REDIS_PASSWORD"),
-		"CACHE_REDIS_DATABASE":   this.Config.GetInt("CACHE_REDIS_DATABASE"),
-		"CACHE_REDIS_KEY_PREFIX": this.Config.GetString("CACHE_REDIS_KEY_PREFIX"),
-		"CACHE_REDIS_MAX_ACTIVE": this.Config.GetInt("CACHE_REDIS_MAX_ACTIVE"),
-		"CACHE_REDIS_MAX_IDLE":   this.Config.GetInt("CACHE_REDIS_MAX_IDLE"),
+	if _, ok := config["CACHE_REDIS_HOST"]; !ok {
+		config["CACHE_REDIS_HOST"] = this.Config.GetString("CACHE_REDIS_HOST")
+	}
+	if _, ok := config["CACHE_REDIS_PORT"]; !ok {
+		config["CACHE_REDIS_PORT"] = this.Config.GetString("CACHE_REDIS_PORT")
+	}
+	if _, ok := config["CACHE_REDIS_PASSWORD"]; !ok {
+		config["CACHE_REDIS_PASSWORD"] = this.Config.GetString("CACHE_REDIS_PASSWORD")
+	}
+	if _, ok := config["CACHE_REDIS_DATABASE"]; !ok {
+		config["CACHE_REDIS_DATABASE"] = this.Config.GetInt("CACHE_REDIS_DATABASE")
+	}
+	if _, ok := config["CACHE_REDIS_KEY_PREFIX"]; !ok {
+		config["CACHE_REDIS_KEY_PREFIX"] = this.Config.GetString("CACHE_REDIS_KEY_PREFIX")
+	}
+	if _, ok := config["CACHE_REDIS_MAX_ACTIVE"]; !ok {
+		config["CACHE_REDIS_MAX_ACTIVE"] = this.Config.GetInt("CACHE_REDIS_MAX_ACTIVE")
+	}
+	if _, ok := config["CACHE_REDIS_MAX_IDLE"]; !ok {
+		config["CACHE_REDIS_MAX_IDLE"] = this.Config.GetInt("CACHE_REDIS_MAX_IDLE")
 	}
 	cacheHandler, err = this.handler.NewCache(ctx, name, config)
 	if err != nil {
@@ -133,20 +145,25 @@ type CacheHandler interface {
 	Get(key interface{}) (interface{}, error)
 	Keys(key interface{}) (interface{}, error)
 	Expire(key interface{}, expire int64) error
-	Hmset(key interface{}, value ...interface{}) error
-	Hmget(key interface{}, value ...interface{}) (interface{}, error)
 	Del(key interface{}) (interface{}, error)
 	Hset(key interface{}, field interface{}, value interface{}) error
+	Hmset(key interface{}, args ...interface{}) error
 	Hget(key interface{}, field interface{}) (interface{}, error)
 	Hdel(key interface{}, field interface{}) (interface{}, error)
 	Hgetall(key interface{}) (interface{}, error)
 	Exists(key interface{}) (bool, error)
 	ScanStruct(src []interface{}, dest interface{}) error
-	Sadd(key interface{}, value interface{}) error
-	Zadd(key interface{}, value ...interface{}) error
-	Zrange(key interface{}) (interface{}, error)
-	Zscore(key interface{}, field interface{}) (interface{}, error)
-	Zrem(key interface{}, field interface{}) (interface{}, error)
+	Sadd(key interface{}, args ...interface{}) error
+	Scard(key interface{}) (int64, error)
+	Zadd(key interface{}, score, value interface{}) error
+	Zrem(key interface{}, value ...interface{}) error
+	Zrange(key interface{}, start interface{}, end interface{}) (interface{}, error)
+	Zcard(key interface{}) (int64, error)
+	Zscan(key interface{}, cursor string, match string, count int64) (nextCursor string, keys []string, err error)
+	Sscan(key interface{}, cursor string, match string, count int64) (interface{}, error)
+	Hscan(key interface{}, cursor string, match string, count int64) (interface{}, error)
+	Scan(cursor string, match string, count int64) (nextCursor string, keys []string, err error)
+	Sort(key interface{}, by interface{}, offest int64, count int64, asc *bool, alpha *bool, get ...interface{}) ([]string, error)
 }
 
 type cacheHandler func() Handler
@@ -167,4 +184,8 @@ func Use(name string) (cacheHandler, error) {
 		return nil, errors.New("cache: unknown cache " + name + " (forgotten register?)")
 	}
 	return cacheHandlers[name], nil
+}
+
+func ErrNil(err error) bool {
+	return RedisErrNil(err)
 }

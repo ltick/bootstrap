@@ -1,6 +1,7 @@
 package ltick
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -331,7 +332,7 @@ func (s *Server) GetRouter() *ServerRouter {
 	return s.Router
 }
 func (s *Server) GetRouteGroup(name string) *ServerRouteGroup {
-	if _, ok := s.RouteGroups[name]; !ok {
+	if _, ok := s.RouteGroups[name]; ok {
 		return nil
 	}
 	return s.RouteGroups[name]
