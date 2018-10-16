@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/ltick/dummy/app/domain/user"
-	libConfig "github.com/ltick/tick-framework/module/config"
-	libUtility "github.com/ltick/tick-framework/module/utility"
-	"github.com/ltick/tick-routing"
+	"github.com/ltick/tick-framework/config"
+	"github.com/ltick/tick-framework/utility"
 	"github.com/satori/go.uuid"
 )
 
@@ -27,10 +26,9 @@ type User struct {
 	ID    string
 	Email string
 
-	Config    *libConfig.Instance
-	Utility   *libUtility.Instance
-	DebugLog  libUtility.LogFunc `inject:"true"`
-	SystemLog libUtility.LogFunc `inject:"true"`
+	Config    *config.Config
+	DebugLog  utility.LogFunc `inject:"true"`
+	SystemLog utility.LogFunc `inject:"true"`
 }
 func NewUser(repo user.UserRepository, service *user.UserService) *User {
 	return &User{
@@ -38,36 +36,34 @@ func NewUser(repo user.UserRepository, service *user.UserService) *User {
 		service: service,
 	}
 }
-func (this *User) Initiate(ctx context.Context) (newCtx context.Context, err error) {
-	var configs map[string]libConfig.Option = map[string]libConfig.Option{
-		"QUEUE_PROVIDER":          libConfig.Option{Type: libConfig.String, Default: "kafka", EnvironmentKey: "QUEUE_PROVIDER"},
-		"QUEUE_KAFKA_BROKERS":     libConfig.Option{Type: libConfig.String, EnvironmentKey: "QUEUE_KAFKA_BROKERS"},
-		"QUEUE_KAFKA_EVENT_GROUP": libConfig.Option{Type: libConfig.String, EnvironmentKey: "QUEUE_KAFKA_EVENT_GROUP"},
-		"QUEUE_KAFKA_EVENT_TOPIC": libConfig.Option{Type: libConfig.String, EnvironmentKey: "QUEUE_KAFKA_EVENT_TOPIC"},
+func (u *User) Initiate(ctx context.Context) (newCtx context.Context, err error) {
+	var configs map[string]config.Option = map[string]config.Option{
+		"QUEUE_PROVIDER":          config.Option{Type: config.String, Default: "kafka", EnvironmentKey: "QUEUE_PROVIDER"},
+		"QUEUE_KAFKA_BROKERS":     config.Option{Type: config.String, EnvironmentKey: "QUEUE_KAFKA_BROKERS"},
+		"QUEUE_KAFKA_EVENT_GROUP": config.Option{Type: config.String, EnvironmentKey: "QUEUE_KAFKA_EVENT_GROUP"},
+		"QUEUE_KAFKA_EVENT_TOPIC": config.Option{Type: config.String, EnvironmentKey: "QUEUE_KAFKA_EVENT_TOPIC"},
 	}
-	newCtx, err = this.Config.SetOptions(ctx, configs)
+	newCtx, err = u.Config.SetOptions(ctx, configs)
 	if err != nil {
 		return newCtx, fmt.Errorf(errUserInitiate+": %s", err.Error())
 	}
 	return newCtx, nil
 }
-func (this *User) OnStartup(ctx context.Context) (context.Context, error) {
-	if this.DebugLog == nil {
-		this.DebugLog = this.Utility.DefaultLogFunc
+func (u *User) OnStartup(ctx context.Context) (context.Context, error) {
+	if u.DebugLog == nil {
+		u.DebugLog = utility.DefaultLogFunc
+	} else {
+		u.DebugLog = utility.DiscardLogFunc
 	}
-	if this.SystemLog == nil {
-		this.SystemLog = this.Utility.DefaultLogFunc
+	if u.SystemLog == nil {
+		u.SystemLog = utility.DefaultLogFunc
+	} else {
+		u.SystemLog = utility.DiscardLogFunc
 	}
 	return ctx, nil
 }
-func (this *User) OnShutdown(ctx context.Context) (context.Context, error) {
+func (u *User) OnShutdown(ctx context.Context) (context.Context, error) {
 	return ctx, nil
-}
-func (this *User) OnRequestStartup(c *routing.Context) error {
-	return nil
-}
-func (this *User) OnRequestShutdown(c *routing.Context) error {
-	return nil
 }
 func (u *User) ListUser() ([]*User, error) {
 	users, err := u.repo.FindAll()

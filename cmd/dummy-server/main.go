@@ -6,53 +6,45 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
+	libLog "log"
 
 	"github.com/ltick/tick-framework"
-	"github.com/ltick/tick-framework/module"
-	libConfig "github.com/ltick/tick-framework/module/config"
-	libLogger "github.com/ltick/tick-framework/module/logger"
-	libUtility "github.com/ltick/tick-framework/module/utility"
+	"github.com/ltick/tick-framework/config"
+	"github.com/ltick/tick-framework/logger"
 	"github.com/ltick/tick-routing"
 	"github.com/ltick/tick-routing/access"
 	"github.com/spf13/cobra"
-
-	"github.com/ltick/dummy/app"
 )
 
-var modules []*module.Module = []*module.Module{
-	// 存储初始化
-	&module.Module{Name: "user", Module: &app.User{}},
-	&module.Module{Name: "appModule", Module: &app.Instance{}},
-}
-var configs map[string]libConfig.Option = map[string]libConfig.Option{
-	"APP_ENV":     libConfig.Option{Type: libConfig.String, Default: "local", EnvironmentKey: "APP_ENV"},
-	"PREFIX_PATH": libConfig.Option{Type: libConfig.String, Default: prefixPath, EnvironmentKey: "PREFIX_PATH"},
-	"TMP_PATH":    libConfig.Option{Type: libConfig.String, Default: "/tmp"},
-	"DEBUG":       libConfig.Option{Type: libConfig.String, Default: false},
 
-	"ACCESS_LOG_TYPE":      libConfig.Option{Type: libConfig.String, Default: "console", EnvironmentKey: "ACCESS_LOG_TYPE"},
-	"ACCESS_LOG_FILENAME":  libConfig.Option{Type: libConfig.String, Default: "/tmp/access.log", EnvironmentKey: "ACCESS_LOG_FILENAME"},
-	"ACCESS_LOG_WRITER":    libConfig.Option{Type: libConfig.String, Default: "discard", EnvironmentKey: "ACCESS_LOG_WRITER"},
-	"ACCESS_LOG_MAX_LEVEL": libConfig.Option{Type: libConfig.String, Default: libLogger.LevelInfo, EnvironmentKey: "ACCESS_LOG_MAX_LEVEL"},
-	"ACCESS_LOG_FORMATTER": libConfig.Option{Type: libConfig.String, Default: "raw", EnvironmentKey: "ACCESS_LOG_FORMATTER"},
+var configs map[string]config.Option = map[string]config.Option{
+	"APP_ENV":     config.Option{Type: config.String, Default: "local", EnvironmentKey: "APP_ENV"},
+	"PREFIX_PATH": config.Option{Type: config.String, Default: prefixPath, EnvironmentKey: "PREFIX_PATH"},
+	"TMP_PATH":    config.Option{Type: config.String, Default: "/tmp"},
+	"DEBUG":       config.Option{Type: config.String, Default: false},
 
-	"DEBUG_LOG_TYPE":      libConfig.Option{Type: libConfig.String, Default: "console", EnvironmentKey: "DEBUG_LOG_TYPE"},
-	"DEBUG_LOG_FILENAME":  libConfig.Option{Type: libConfig.String, Default: "/tmp/debug.log", EnvironmentKey: "DEBUG_LOG_FILENAME"},
-	"DEBUG_LOG_WRITER":    libConfig.Option{Type: libConfig.String, Default: "discard", EnvironmentKey: "DEBUG_LOG_WRITER"},
-	"DEBUG_LOG_MAX_LEVEL": libConfig.Option{Type: libConfig.String, Default: libLogger.LevelInfo, EnvironmentKey: "DEBUG_LOG_MAX_LEVEL"},
-	"DEBUG_LOG_FORMATTER": libConfig.Option{Type: libConfig.String, Default: "default", EnvironmentKey: "DEBUG_LOG_FORMATTER"},
+	"ACCESS_LOG_TYPE":      config.Option{Type: config.String, Default: "console", EnvironmentKey: "ACCESS_LOG_TYPE"},
+	"ACCESS_LOG_FILENAME":  config.Option{Type: config.String, Default: "/tmp/access.log", EnvironmentKey: "ACCESS_LOG_FILENAME"},
+	"ACCESS_LOG_WRITER":    config.Option{Type: config.String, Default: "discard", EnvironmentKey: "ACCESS_LOG_WRITER"},
+	"ACCESS_LOG_MAX_LEVEL": config.Option{Type: config.String, Default: log.LevelInfo, EnvironmentKey: "ACCESS_LOG_MAX_LEVEL"},
+	"ACCESS_LOG_FORMATTER": config.Option{Type: config.String, Default: "raw", EnvironmentKey: "ACCESS_LOG_FORMATTER"},
 
-	"SYSTEM_LOG_TYPE":      libConfig.Option{Type: libConfig.String, Default: "console", EnvironmentKey: "SYSTEM_LOG_TYPE"},
-	"SYSTEM_LOG_FILENAME":  libConfig.Option{Type: libConfig.String, Default: "/tmp/system.log", EnvironmentKey: "SYSTEM_LOG_FILENAME"},
-	"SYSTEM_LOG_WRITER":    libConfig.Option{Type: libConfig.String, Default: "discard", EnvironmentKey: "SYSTEM_LOG_WRITER"},
-	"SYSTEM_LOG_MAX_LEVEL": libConfig.Option{Type: libConfig.String, Default: libLogger.LevelInfo, EnvironmentKey: "SYSTEM_LOG_MAX_LEVEL"},
-	"SYSTEM_LOG_FORMATTER": libConfig.Option{Type: libConfig.String, Default: "sys", EnvironmentKey: "SYSTEM_LOG_FORMATTER"},
+	"DEBUG_LOG_TYPE":      config.Option{Type: config.String, Default: "console", EnvironmentKey: "DEBUG_LOG_TYPE"},
+	"DEBUG_LOG_FILENAME":  config.Option{Type: config.String, Default: "/tmp/debug.log", EnvironmentKey: "DEBUG_LOG_FILENAME"},
+	"DEBUG_LOG_WRITER":    config.Option{Type: config.String, Default: "discard", EnvironmentKey: "DEBUG_LOG_WRITER"},
+	"DEBUG_LOG_MAX_LEVEL": config.Option{Type: config.String, Default: log.LevelInfo, EnvironmentKey: "DEBUG_LOG_MAX_LEVEL"},
+	"DEBUG_LOG_FORMATTER": config.Option{Type: config.String, Default: "default", EnvironmentKey: "DEBUG_LOG_FORMATTER"},
+
+	"SYSTEM_LOG_TYPE":      config.Option{Type: config.String, Default: "console", EnvironmentKey: "SYSTEM_LOG_TYPE"},
+	"SYSTEM_LOG_FILENAME":  config.Option{Type: config.String, Default: "/tmp/system.log", EnvironmentKey: "SYSTEM_LOG_FILENAME"},
+	"SYSTEM_LOG_WRITER":    config.Option{Type: config.String, Default: "discard", EnvironmentKey: "SYSTEM_LOG_WRITER"},
+	"SYSTEM_LOG_MAX_LEVEL": config.Option{Type: config.String, Default: log.LevelInfo, EnvironmentKey: "SYSTEM_LOG_MAX_LEVEL"},
+	"SYSTEM_LOG_FORMATTER": config.Option{Type: config.String, Default: "sys", EnvironmentKey: "SYSTEM_LOG_FORMATTER"},
 }
 
 var enviroment string
@@ -85,7 +77,7 @@ func DefaultLogFunc(ctx context.Context, format string, data ...interface{}) {
 	logData[1] = requestId
 	logData[2] = serverAddress
 	copy(logData[3:], data)
-	log.Printf("APP|%s|%s|%s|"+format, logData...)
+	libLog.Printf("APP|%s|%s|%s|"+format, logData...)
 }
 
 func GetLogContext(ctx context.Context) (forwardRequestId string, requestId string, clientIP string, serverAddress string) {
@@ -108,15 +100,18 @@ func StartService() {
 		fmt.Printf("dummy-server: prefix path does not set\n")
 		os.Exit(1)
 	}
-	e := ltick.NewClassic(modules, configs, &ltick.Option{
-		PathPrefix: prefixPath,
-		EnvPrefix:  "DUMMY",
-	})
-	err := e.UseModule("cache", "queue", "database")
+	r, err := ltick.NewRegistry()
 	if err != nil {
-		e.SystemLog(fmt.Sprintf("dummy-server: use module error: " + err.Error()))
+		fmt.Sprintf("dummy-server: use component error: " + err.Error())
 		os.Exit(1)
 	}
+	err = r.UseComponent("cache", "queue", "database")
+	if err != nil {
+		fmt.Sprintf("dummy-server: use component error: " + err.Error())
+		os.Exit(1)
+	}
+	e := ltick.NewDefault("DUMMY", r, configs)
+
 	systemLogger, err := e.GetLogger("system")
 	if err != nil {
 		e.SystemLog(fmt.Sprintf("dummy-server: get logger error: " + err.Error()))
@@ -215,9 +210,7 @@ func StartService() {
 		"TraceLog":  traceLogFunc,
 		"SystemLog": systemLogFunc,
 	}
-	e.WithValues(values).NewClassicServer("test", func(c *routing.Context) error {
-		return nil
-	}).SetLogFunc(accessLogFunc, systemLogger.Emergency, recoveryHandler)
+	e.WithValues(values).NewDefaultServer("test", nil).SetLogFunc(accessLogFunc, systemLogger.Emergency, recoveryHandler)
 	err = e.Startup()
 	if err != nil {
 		e.SystemLog(fmt.Sprintf("dummy-server: startup error: " + err.Error()))
@@ -232,8 +225,7 @@ func StartService() {
 }
 
 type Callback struct {
-	Utility *libUtility.Instance
-	Config  *libConfig.Instance
+	Config  *config.Config
 }
 
 func (f *Callback) OnStartup(a *ltick.Engine) error {
@@ -255,7 +247,7 @@ func Execute() {
 	RootCmd.PersistentFlags().StringVar(&prefixPath, "prefix", defaultPrefixPath, "prefix path of this service")
 	RootCmd.AddCommand(startCmd)
 	if err := RootCmd.Execute(); err != nil {
-		log.Println(err)
+		libLog.Println(err)
 		os.Exit(1)
 	}
 }

@@ -22,8 +22,10 @@ func (s *userService) ListUser(ctx *ltick.Context) error {
 	}
 
 	res := &ListUserResponseType{
-		Users: toUser(users),
+		Users: toUsers(users),
 	}
+
+	ctx.Write(res.Users)
 
 	return nil
 }
@@ -35,7 +37,7 @@ func (s *userService) RegisterUser(ctx *ltick.Context) error {
 	return nil
 }
 
-func toUser(users []*app.User) []*User {
+func toUsers(users []*app.User) []*User {
 	res := make([]*User, len(users))
 	for i, user := range users {
 		res[i] = &User{
